@@ -40,6 +40,10 @@ This is known to work with Spotify 1.0.45 and 1.0.47 64-bit.
 
 This script is not POSIX-compliant. I wrote it with Bash in mind, may or may not work with other shells.
 
+## Known issues
+
+This script probably won't work if one of the problematic libraries is the first or last in the .gnu.version_r table. I intend to address this soon™.
+
 ## Useful resources
 
 * https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#Section_header
