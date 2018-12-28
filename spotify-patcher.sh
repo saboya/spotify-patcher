@@ -87,28 +87,28 @@ IFS=$'\n'
 LIBS=($(readelf -V $SPOTIFY_BIN 2>/dev/null | sed '/^$/,/^$/d' | grep "File:"))
 
 for lib in ${LIBS[@]}; do
-	if ! is_bad_lib $lib; then
-		GOOD_OFFSETS+=($(parse_lib_offset $lib))
-	fi
-done
-IFS=$IFS_pre
-
-for lib in ${GOOD_OFFSETS[@]}; do
 	lib_offset=$(parse_lib_offset $lib)
 
 	if [ ! -z ${last_good+x} ]; then
-		last_pointer_byteoffset=$(($GNU_VERSION_OFFSET+$last_good+0xc))
-		last_pointer=$(hexdump -s $last_pointer_byteoffset -n 2 -e '"0x%04x\n"' $SPOTIFY_BIN)
-
-		if [[ $(($lib_offset)) != $(($last_good+$last_pointer)) ]]; then
-			new_offset=$(printf '%04x%s' $(($lib_offset-$last_good)))
+		if is_bad_lib $lib; then
+			echo $lib
 			printf "Bad lib found, updating pointer:\n"
+
+			new_offset=$(printf '%04x%s' $(($lib_offset-$last_good)))
+
+			if [[ $lib == ${LIBS[-1]} ]]; then
+				printf "  Bad lib is last lib, setting pointer to 0.\n"
+				new_offset=$(printf '%04x%s' 0)
+			fi
+
 			printf "  Writing 0x%s to 0x%X\n" $new_offset $last_pointer_byteoffset
 			echo -ne "\x${new_offset:2:4}\x${new_offset:0:2}" | dd of=$SPOTIFY_BIN seek=$last_pointer_byteoffset oflag=seek_bytes bs=2 count=1 conv=notrunc status=none
 		fi
 	fi
 
 	last_good=$lib_offset
+	last_pointer_byteoffset=$(($GNU_VERSION_OFFSET+$last_good+0xc))
+	last_pointer=$(hexdump -s $last_pointer_byteoffset -n 2 -e '"0x%04x\n"' $SPOTIFY_BIN)
 done
 
 update_header
