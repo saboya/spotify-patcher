@@ -21,6 +21,9 @@
 # SOFTWARE.
 #
 
+# Setting LC_ALL to ensure correct readelf output
+export LC_ALL=C
+
 BAD_LIBS=( \
 	"libssl.so" \
 	"libcrypto.so" \
